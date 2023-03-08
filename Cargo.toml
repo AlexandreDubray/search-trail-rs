@@ -1,5 +1,5 @@
 [package]
-name = "trail-rs"
+name = "search_trail"
 version = "0.1.0"
 edition = "2021"
 

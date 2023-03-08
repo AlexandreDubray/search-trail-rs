@@ -55,6 +55,38 @@ enum TrailEntry {
     F64Entry(StateF64),
 }
 
+/// This structure implements a simple manager that can save a state and restore it later.
+/// It is able to store each numeric type as well as booleans.
+/// The states are stored and restored like a stack. This means that when restoring the state of the
+/// manager, all the managed values are restored to their **most recently** saved value.
+/// 
+/// #Example
+/// 
+/// ```
+/// use search_trail::{StateManager, SaveAndRestore, UsizeManager};
+/// 
+/// fn main() {
+///     let mut mgr = StateManager::default();
+///     let n = mgr.manage_usize(0);
+///     assert_eq!(0, mgr.get_usize(n));
+///     
+///     mgr.save_state();
+///     
+///     mgr.set_usize(n, 20);
+///     assert_eq!(20, mgr.get_usize(n));
+///     
+///     mgr.save_state();
+///
+///     mgr.set_usize(n, 42);
+///     assert_eq!(42, mgr.get_usize(n));
+///     
+///     mgr.restore_state();
+///     assert_eq!(20, mgr.get_usize(n));
+///     
+///     mgr.restore_state();
+///     assert_eq!(0, mgr.get_usize(n));
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct StateManager {
     /// This clock is responsible to tell if a data need to be stored on the trail for restitution
@@ -244,11 +276,11 @@ macro_rules! manage_numbers {
                     fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u:camel>];
                     #[doc="Returns the value of the resource at the given index"]
                     fn [<get _ $u>](&self, id: [<Reversible $u:camel>]) -> $u;
-                    #[doc="Sets the resource at the given index to the given value"]
+                    #[doc="Sets the resource at the given index to the given value and returns the new value"]
                     fn [<set _ $u>](&mut self, id: [<Reversible $u:camel>], value: $u) -> $u;
-                    #[doc="Increments the value of the resource at the given index"]
+                    #[doc="Increments the value of the resource at the given index and returns the new value"]
                     fn [<increment _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
-                    #[doc="Decrements the value of the resource at the given index"]
+                    #[doc="Decrements the value of the resource at the given index and returns the new value"]
                     fn [<decrement _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
                 }
                 
@@ -408,13 +440,19 @@ manage_numbers! {
     f64
 }
 
+/// Index for a managed bool. Note that this only redirect towards a managed usize
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReversibleBool(ReversibleUsize);
 
+/// Trait that define the operation that can be done on a managed boolean.
 pub trait BoolManager {
+    /// Creates a new managed boolean
     fn manage_bool(&mut self, value: bool) -> ReversibleBool;
+    /// Returns the value of a managed boolean
     fn get_bool(&self, id: ReversibleBool) -> bool;
+    /// Sets the value of a managed boolean to the given value and returns the new value
     fn set_bool(&mut self, id: ReversibleBool, value: bool) -> bool;
+    /// Flips the value of a managed boolean and returns the new value
     fn flip_bool(&mut self, id: ReversibleBool) -> bool {
         self.set_bool(id, !self.get_bool(id))
     }
