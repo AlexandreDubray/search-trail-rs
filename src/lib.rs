@@ -6,19 +6,33 @@ use paste::paste;
 struct Level {
     /// The length of the trail at the moment this level was started
     trail_size: usize,
+    /// The number of u8 that were recorded when reaching the level
     size_u8: usize,
+    /// The number of u16 that were recorded when reaching the level
     size_u16: usize,
+    /// The number of u32 that were recorded when reaching the level
     size_u32: usize,
+    /// The number of u64 that were recorded when reaching the level
     size_u64: usize,
+    /// The number of u128 that were recorded when reaching the level
     size_u128: usize,
+    /// The number of usize that were recorded when reaching the level
     size_usize: usize,
+    /// The number of i8 that were recorded when reaching the level
     size_i8: usize,
+    /// The number of i16 that were recorded when reaching the level
     size_i16: usize,
+    /// The number of i32 that were recorded when reaching the level
     size_i32: usize,
+    /// The number of i64 that were recorded when reaching the level
     size_i64: usize,
+    /// The number of i128 that were recorded when reaching the level
     size_i128: usize,
+    /// The number of isize that were recorded when reaching the level
     size_isize: usize,
+    /// The number of f32 that were recorded when reaching the level
     size_f32: usize,
+    /// The number of f64 that were recorded when reaching the level
     size_f64: usize,
 }
 
@@ -55,19 +69,33 @@ pub struct StateManager {
     /// Levels of the trail where a level is an indicator of the number of `TrailEntry` for a given
     /// timestamp of `clock`
     levels: Vec<Level>,
+    /// The states of the u8 managed by the trail
     numbers_u8: Vec<StateU8>,
+    /// The states of the u16 managed by the trail
     numbers_u16: Vec<StateU16>,
+    /// The states of the u32 managed by the trail
     numbers_u32: Vec<StateU32>,
+    /// The states of the u64 managed by the trail
     numbers_u64: Vec<StateU64>,
+    /// The states of the u128 managed by the trail
     numbers_u128: Vec<StateU128>,
+    /// The states of the usize managed by the trail
     numbers_usize: Vec<StateUsize>,
+    /// The states of the i8 managed by the trail
     numbers_i8: Vec<StateI8>,
+    /// The states of the i16 managed by the trail
     numbers_i16: Vec<StateI16>,
+    /// The states of the i32 managed by the trail
     numbers_i32: Vec<StateI32>,
+    /// The states of the i64 managed by the trail
     numbers_i64: Vec<StateI64>,
+    /// The states of the i128 managed by the trail
     numbers_i128: Vec<StateI128>,
+    /// The states of the isize managed by the trail
     numbers_isize: Vec<StateIsize>,
+    /// The states of the f32 managed by the trail
     numbers_f32: Vec<StateF32>,
+    /// The states of the f64 managed by the trail
     numbers_f64: Vec<StateF64>,
 }
 
@@ -112,6 +140,14 @@ impl Default for StateManager {
 }
 
 // --- Save and restore --- //
+
+pub trait SaveAndRestore {
+    /// Saves the current state of all managed resources
+    fn save_state(&mut self);
+
+    /// Restores the previous state of all managed resources
+    fn restore_state(&mut self);
+}
 
 impl SaveAndRestore for StateManager {
     fn save_state(&mut self) {
@@ -182,33 +218,37 @@ impl SaveAndRestore for StateManager {
     }
 }
 
-pub trait SaveAndRestore {
-    /// Saves the current state of all managed resources
-    fn save_state(&mut self);
-
-    /// Restores the previous state of all managed resources
-    fn restore_state(&mut self);
-}
-
 macro_rules! manage_numbers {
     ($($u:ty),*) => {
         $(
             paste!{
+                // Can not use format!() in this doc
                 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+                #[doc="An index of the managed resource type"]
                 pub struct [<Reversible $u:camel>](usize);
                 
+                #[doc="A state for the managed resource type"]
                 #[derive(Debug, Clone, Copy)]
                 struct [<State $u:camel>] {
+                    #[doc="Index of the resource in the asociated vector in the trail"]
                     id: [<Reversible $u:camel>],
+                    #[doc="Clock of the resource. If less than the clock of the manager, the data needs to be saved on the trail if modified"]
                     clock: usize,
+                    #[doc="The value of the managed resource"]
                     value: $u,
                 }
 
+                #[doc="Trait that define what operation can be done on the managed resource type"]
                 pub trait [<$u:camel Manager>] {
+                    #[doc=format!("Creates a new managed {}.Returns the index of the resource in the corresponding vector", stringify!($u))]
                     fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u:camel>];
+                    #[doc="Returns the value of the resource at the given index"]
                     fn [<get _ $u>](&self, id: [<Reversible $u:camel>]) -> $u;
+                    #[doc="Sets the resource at the given index to the given value"]
                     fn [<set _ $u>](&mut self, id: [<Reversible $u:camel>], value: $u) -> $u;
+                    #[doc="Increments the value of the resource at the given index"]
                     fn [<increment _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
+                    #[doc="Decrements the value of the resource at the given index"]
                     fn [<decrement _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
                 }
                 
