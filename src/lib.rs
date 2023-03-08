@@ -11,16 +11,34 @@ struct Level {
     size_u32: usize,
     size_u64: usize,
     size_u128: usize,
+    size_usize: usize,
+    size_i8: usize,
+    size_i16: usize,
+    size_i32: usize,
+    size_i64: usize,
+    size_i128: usize,
+    size_isize: usize,
+    size_f32: usize,
+    size_f64: usize,
 }
 
 /// An entry that is used to restore data from the trail
 #[derive(Debug, Clone, Copy)]
 enum TrailEntry {
-    Intu8Entry(Stateu8),
-    Intu16Entry(Stateu16),
-    Intu32Entry(Stateu32),
-    Intu64Entry(Stateu64),
-    Intu128Entry(Stateu128),
+    U8Entry(StateU8),
+    U16Entry(StateU16),
+    U32Entry(StateU32),
+    U64Entry(StateU64),
+    U128Entry(StateU128),
+    UsizeEntry(StateUsize),
+    I8Entry(StateI8),
+    I16Entry(StateI16),
+    I32Entry(StateI32),
+    I64Entry(StateI64),
+    I128Entry(StateI128),
+    IsizeEntry(StateIsize),
+    F32Entry(StateF32),
+    F64Entry(StateF64),
 }
 
 #[derive(Debug, Clone)]
@@ -37,11 +55,20 @@ pub struct StateManager {
     /// Levels of the trail where a level is an indicator of the number of `TrailEntry` for a given
     /// timestamp of `clock`
     levels: Vec<Level>,
-    integers_u8: Vec<Stateu8>,
-    integers_u16: Vec<Stateu16>,
-    integers_u32: Vec<Stateu32>,
-    integers_u64: Vec<Stateu64>,
-    integers_u128: Vec<Stateu128>,
+    numbers_u8: Vec<StateU8>,
+    numbers_u16: Vec<StateU16>,
+    numbers_u32: Vec<StateU32>,
+    numbers_u64: Vec<StateU64>,
+    numbers_u128: Vec<StateU128>,
+    numbers_usize: Vec<StateUsize>,
+    numbers_i8: Vec<StateI8>,
+    numbers_i16: Vec<StateI16>,
+    numbers_i32: Vec<StateI32>,
+    numbers_i64: Vec<StateI64>,
+    numbers_i128: Vec<StateI128>,
+    numbers_isize: Vec<StateIsize>,
+    numbers_f32: Vec<StateF32>,
+    numbers_f64: Vec<StateF64>,
 }
 
 impl Default for StateManager {
@@ -56,12 +83,30 @@ impl Default for StateManager {
                 size_u32: 0,
                 size_u64: 0,
                 size_u128: 0,
+                size_usize: 0,
+                size_i8: 0,
+                size_i16: 0,
+                size_i32: 0,
+                size_i64: 0,
+                size_i128: 0,
+                size_isize: 0,
+                size_f32: 0,
+                size_f64: 0,
             }],
-            integers_u8: vec![],
-            integers_u16: vec![],
-            integers_u32: vec![],
-            integers_u64: vec![],
-            integers_u128: vec![],
+            numbers_u8: vec![],
+            numbers_u16: vec![],
+            numbers_u32: vec![],
+            numbers_u64: vec![],
+            numbers_u128: vec![],
+            numbers_usize: vec![],
+            numbers_i8: vec![],
+            numbers_i16: vec![],
+            numbers_i32: vec![],
+            numbers_i64: vec![],
+            numbers_i128: vec![],
+            numbers_isize: vec![],
+            numbers_f32: vec![],
+            numbers_f64: vec![],
         }
     }
 }
@@ -75,11 +120,20 @@ impl SaveAndRestore for StateManager {
         self.clock += 1;
         self.levels.push(Level {
             trail_size: self.trail.len(),
-            size_u8: self.integers_u8.len(),
-            size_u16: self.integers_u16.len(),
-            size_u32: self.integers_u32.len(),
-            size_u64: self.integers_u64.len(),
-            size_u128: self.integers_u128.len(),
+            size_u8: self.numbers_u8.len(),
+            size_u16: self.numbers_u16.len(),
+            size_u32: self.numbers_u32.len(),
+            size_u64: self.numbers_u64.len(),
+            size_u128: self.numbers_u128.len(),
+            size_usize: self.numbers_usize.len(),
+            size_i8: self.numbers_i8.len(),
+            size_i16: self.numbers_i16.len(),
+            size_i32: self.numbers_i32.len(),
+            size_i64: self.numbers_i64.len(),
+            size_i128: self.numbers_i128.len(),
+            size_isize: self.numbers_isize.len(),
+            size_f32: self.numbers_f32.len(),
+            size_f64: self.numbers_f64.len(),
         });
     }
 
@@ -94,19 +148,37 @@ impl SaveAndRestore for StateManager {
         // these first elements.
         for e in self.trail.iter().skip(level.trail_size).rev().copied() {
             match e {
-                TrailEntry::Intu8Entry(state) => self.integers_u8[state.id.0] = state,
-                TrailEntry::Intu16Entry(state) => self.integers_u16[state.id.0] = state,
-                TrailEntry::Intu32Entry(state) => self.integers_u32[state.id.0] = state,
-                TrailEntry::Intu64Entry(state) => self.integers_u64[state.id.0] = state,
-                TrailEntry::Intu128Entry(state) => self.integers_u128[state.id.0] = state,
+                TrailEntry::U8Entry(state) => self.numbers_u8[state.id.0] = state,
+                TrailEntry::U16Entry(state) => self.numbers_u16[state.id.0] = state,
+                TrailEntry::U32Entry(state) => self.numbers_u32[state.id.0] = state,
+                TrailEntry::U64Entry(state) => self.numbers_u64[state.id.0] = state,
+                TrailEntry::U128Entry(state) => self.numbers_u128[state.id.0] = state,
+                TrailEntry::UsizeEntry(state) => self.numbers_usize[state.id.0] = state,
+                TrailEntry::I8Entry(state) => self.numbers_i8[state.id.0] = state,
+                TrailEntry::I16Entry(state) => self.numbers_i16[state.id.0] = state,
+                TrailEntry::I32Entry(state) => self.numbers_i32[state.id.0] = state,
+                TrailEntry::I64Entry(state) => self.numbers_i64[state.id.0] = state,
+                TrailEntry::I128Entry(state) => self.numbers_i128[state.id.0] = state,
+                TrailEntry::IsizeEntry(state) => self.numbers_isize[state.id.0] = state,
+                TrailEntry::F32Entry(state) => self.numbers_f32[state.id.0] = state,
+                TrailEntry::F64Entry(state) => self.numbers_f64[state.id.0] = state,
             }
         }
         self.trail.truncate(level.trail_size);
-        self.integers_u8.truncate(level.size_u8);
-        self.integers_u16.truncate(level.size_u16);
-        self.integers_u32.truncate(level.size_u32);
-        self.integers_u64.truncate(level.size_u64);
-        self.integers_u128.truncate(level.size_u128);
+        self.numbers_u8.truncate(level.size_u8);
+        self.numbers_u16.truncate(level.size_u16);
+        self.numbers_u32.truncate(level.size_u32);
+        self.numbers_u64.truncate(level.size_u64);
+        self.numbers_u128.truncate(level.size_u128);
+        self.numbers_usize.truncate(level.size_usize);
+        self.numbers_i8.truncate(level.size_i8);
+        self.numbers_i16.truncate(level.size_i16);
+        self.numbers_i32.truncate(level.size_i32);
+        self.numbers_i64.truncate(level.size_i64);
+        self.numbers_i128.truncate(level.size_i128);
+        self.numbers_isize.truncate(level.size_isize);
+        self.numbers_f32.truncate(level.size_f32);
+        self.numbers_f64.truncate(level.size_f64);
     }
 }
 
@@ -118,75 +190,116 @@ pub trait SaveAndRestore {
     fn restore_state(&mut self);
 }
 
-macro_rules! manage_integers {
-    ($($u:ty: $tname:ident,)*) => {
+macro_rules! manage_numbers {
+    ($($u:ty,)*) => {
         $(
             paste!{
                 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-                pub struct [<Reversible $u>](usize);
+                pub struct [<Reversible $u:camel>](usize);
                 
                 #[derive(Debug, Clone, Copy)]
-                struct [<State $u>] {
-                    id: [<Reversible $u>],
+                struct [<State $u:camel>] {
+                    id: [<Reversible $u:camel>],
                     clock: usize,
                     value: $u,
                 }
 
-                pub trait $tname {
-                    fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u>];
-                    fn [<get _ $u>](&self, id: [<Reversible $u>]) -> $u;
-                    fn [<set _ $u>](&mut self, id: [<Reversible $u>], value: $u) -> $u;
-                    fn [<increment _ $u>](&mut self, id: [<Reversible $u>]) -> $u;
-                    fn [<decrement _ $u>](&mut self, id: [<Reversible $u>]) -> $u;
+                pub trait [<$u:camel Manager>] {
+                    fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u:camel>];
+                    fn [<get _ $u>](&self, id: [<Reversible $u:camel>]) -> $u;
+                    fn [<set _ $u>](&mut self, id: [<Reversible $u:camel>], value: $u) -> $u;
+                    fn [<increment _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
+                    fn [<decrement _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
                 }
                 
-                impl $tname for StateManager {
-                    fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u>] {
-                        let id = [<Reversible $u>](self.[<integers _ $u>].len());
-                        self.[<integers _ $u>].push([<State $u>]{
+                impl [<$u:camel Manager>] for StateManager {
+                    fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u:camel>] {
+                        let id = [<Reversible $u:camel>](self.[<numbers _ $u>].len());
+                        self.[<numbers _ $u>].push([<State $u:camel>]{
                             id,
                             clock: self.clock,
                             value,
                         });
                         id
                     }
-                    fn [<get _ $u>](&self, id: [<Reversible $u>]) -> $u {
-                        self.[<integers _ $u>][id.0].value
+                    fn [<get _ $u>](&self, id: [<Reversible $u:camel>]) -> $u {
+                        self.[<numbers _ $u>][id.0].value
                     }
-                    fn [<set _ $u>](&mut self, id: [<Reversible $u>], value: $u) -> $u {
-                        let curr = self.[<integers _ $u>][id.0];
+                    fn [<set _ $u>](&mut self, id: [<Reversible $u:camel>], value: $u) -> $u {
+                        let curr = self.[<numbers _ $u>][id.0];
                         if value != curr.value {
                             if curr.clock < self.clock {
-                                self.trail.push(TrailEntry::[<Int $u Entry>](curr));
-                                self.[<integers _ $u>][id.0] = [<State $u>] {
+                                self.trail.push(TrailEntry::[<$u:camel Entry>](curr));
+                                self.[<numbers _ $u>][id.0] = [<State $u:camel>] {
                                     id,
                                     clock: self.clock,
                                     value,
                                 };
                             } else {
-                                self.[<integers _ $u>][id.0].value = value;
+                                self.[<numbers _ $u>][id.0].value = value;
                             }
                         }
                         value
                     }
 
-                    fn [<increment _ $u>](&mut self, id: [<Reversible $u>]) -> $u {
-                        self.[<set _ $u>](id, self.[<get _ $u>](id) + 1)
+                    fn [<increment _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u {
+                        self.[<set _ $u>](id, self.[<get _ $u>](id) + 1 as $u)
                     }
 
-                    fn [<decrement _ $u>](&mut self, id: [<Reversible $u>]) -> $u {
-                        self.[<set _ $u>](id, self.[<get _ $u>](id) - 1)
+                    fn [<decrement _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u {
+                        self.[<set _ $u>](id, self.[<get _ $u>](id) - 1 as $u)
                     }
+                }
+                
+                #[cfg(test)]
+                mod [<test _ $u>] {
+
                 }
             }
         )*
     }
 }
 
-manage_integers! {
-    u8: ManagerU8,
-    u16: ManagerU16,
-    u32: ManagerU32,
-    u64: ManagerU64,
-    u128: ManagerU128,
+manage_numbers! {
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    usize,
+    i8,
+    i16,
+    i32,
+    i64,
+    i128,
+    isize,
+    f32,
+    f64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ReversibleBool(ReversibleUsize);
+
+pub trait BoolManager {
+    fn manage_bool(&mut self, value: bool) -> ReversibleBool;
+    fn get_bool(&self, id: ReversibleBool) -> bool;
+    fn set_bool(&mut self, id: ReversibleBool, value: bool) -> bool;
+    fn flip_bool(&mut self, id: ReversibleBool) -> bool {
+        self.set_bool(id, !self.get_bool(id))
+    }
+}
+
+impl BoolManager for StateManager {
+
+    fn manage_bool(&mut self, value: bool) -> ReversibleBool {
+        ReversibleBool(self.manage_usize(value as usize))
+    }
+
+    fn get_bool(&self, id: ReversibleBool) -> bool {
+        self.get_usize(id.0) != 0   
+    }
+
+    fn set_bool(&mut self, id: ReversibleBool, value: bool) -> bool {
+        self.set_usize(id.0, value as usize) != 0
+    }
 }
