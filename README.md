@@ -6,6 +6,9 @@ It means that you're able to
 - Save the state of the manager (i.e. a "snapshot" of all the values of the managed resources)
 - Restore the manager to its previous state (i.e. set the values of the managed resources to the previous snapshot)
 
+The code was originally developped by [@xgillard](https://github.com/xgillard/) on [maxi-cp-rs](https://github.com/xgillard/maxicp-rs).
+This repo only adds the support for other type.
+
 
 # Example
 
