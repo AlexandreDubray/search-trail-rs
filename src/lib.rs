@@ -191,7 +191,7 @@ pub trait SaveAndRestore {
 }
 
 macro_rules! manage_numbers {
-    ($($u:ty,)*) => {
+    ($($u:ty),*) => {
         $(
             paste!{
                 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -253,7 +253,98 @@ macro_rules! manage_numbers {
                 
                 #[cfg(test)]
                 mod [<test _ $u>] {
+                    
+                    use crate::{StateManager, SaveAndRestore,[<$u:camel Manager>], [<Reversible $u:camel>]};
+                    
+                    #[test]
+                    fn manager_return_values() {
+                        let mut mgr = StateManager::default();
+                        let values: Vec<[<Reversible $u:camel>]> = (0..10).map(|i| mgr.[<manage _ $u>](i as $u)).collect();
+                        for i in 0..10 {
+                            assert_eq!([<Reversible $u:camel>](i), values[i]);
+                            let x = mgr.[<set _ $u>](values[i], i as $u + 1 as $u);
+                            assert_eq!(i as $u + 1 as $u, x);
+                            assert_eq!(x + 1 as $u, mgr.[<increment _ $u>](values[i]));
+                            assert_eq!(x, mgr.[<decrement _ $u>](values[i]));
+                        }
+                    }
+                    
+                    #[test]
+                    fn set_and_restore() {
+                        let mut mgr = StateManager::default();
+                        let n = mgr.[<manage _ $u>](10 as $u);
+                        assert_eq!(10 as $u, mgr.[<get _ $u>](n));
+                        
+                        mgr.save_state();
 
+                        let x = mgr.[<set _ $u>](n, 20 as $u);
+                        assert_eq!(20 as $u, x);
+                        assert_eq!(20 as $u, mgr.[<get _ $u>](n));
+
+                        let x = mgr.[<set _ $u>](n, 23 as $u);
+                        assert_eq!(23 as $u, x);
+                        assert_eq!(23 as $u, mgr.[<get _ $u>](n));
+                        
+                        mgr.restore_state();
+                        
+                        assert_eq!(10 as $u, mgr.[<get _ $u>](n));
+
+                        let x = mgr.[<set _ $u>](n, 42 as $u);
+                        assert_eq!(42 as $u, x);
+                        assert_eq!(42 as $u, mgr.[<get _ $u>](n));
+
+                        mgr.save_state();
+
+                        let x = mgr.[<set _ $u>](n, 12 as $u);
+                        assert_eq!(12 as $u, x);
+                        assert_eq!(12 as $u, mgr.[<get _ $u>](n));
+
+                        mgr.save_state();
+
+                        let x = mgr.[<set _ $u>](n, 12 as $u);
+                        assert_eq!(12 as $u, x);
+                        assert_eq!(12 as $u, mgr.[<get _ $u>](n));
+
+                        mgr.save_state();
+
+                        mgr.restore_state();
+                        assert_eq!(12 as $u, mgr.[<get _ $u>](n));
+
+                        mgr.restore_state();
+                        assert_eq!(12 as $u, mgr.[<get _ $u>](n));
+                        
+                        mgr.restore_state();
+                        assert_eq!(42 as $u, mgr.[<get _ $u>](n));
+                    }
+                    
+                    #[test]
+                    fn test_increment() {
+                        let mut mgr = StateManager::default();
+                        let n = mgr.[<manage _ $u>](30 as $u);
+                        assert_eq!(30 as $u, mgr.[<get _ $u>](n));
+
+                        mgr.save_state();
+
+                        for i in 0..10 {
+                            let x = mgr.[<increment _ $u>](n);
+                            assert_eq!((30 + i + 1) as $u, x);
+                            assert_eq!((30 + i + 1) as $u, mgr.[<get _ $u>](n));
+                        }
+                        
+                        mgr.restore_state();
+                        assert_eq!(30 as $u, mgr.[<get _ $u>](n));
+
+                        mgr.save_state();
+
+                        for i in 0..10 {
+                            let x = mgr.[<decrement _ $u>](n);
+                            assert_eq!((30 -i -1) as $u, x);
+                            assert_eq!((30 -i -1) as $u, mgr.[<get _ $u>](n));
+                        }
+                        
+                        mgr.restore_state();
+                        assert_eq!(30 as $u, mgr.[<get _ $u>](n));
+                    }
                 }
             }
         )*
@@ -274,7 +365,7 @@ manage_numbers! {
     i128,
     isize,
     f32,
-    f64,
+    f64
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -301,5 +392,77 @@ impl BoolManager for StateManager {
 
     fn set_bool(&mut self, id: ReversibleBool, value: bool) -> bool {
         self.set_usize(id.0, value as usize) != 0
+    }
+}
+
+#[cfg(test)]
+mod test_manager {
+    use crate::{StateManager, SaveAndRestore, BoolManager};
+
+    #[test]
+    #[should_panic]
+    fn can_not_get_bool_manage_at_deeper_level() {
+        let mut mgr = StateManager::default();
+        let a = mgr.manage_bool(true);
+        assert!(mgr.get_bool(a));
+
+        mgr.save_state();
+
+        let b = mgr.manage_bool(false);
+        assert!(!mgr.get_bool(b));
+        assert!(mgr.get_bool(a));
+
+        mgr.set_bool(a, false);
+
+        mgr.restore_state();
+        assert!(mgr.get_bool(a));
+        mgr.get_bool(b);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic]
+    fn can_not_pop_root_level() {
+        let mut mgr = StateManager::default();
+        let a = mgr.manage_bool(true);
+
+        mgr.save_state();
+        mgr.set_bool(a, false);
+        mgr.restore_state();
+        mgr.restore_state();
+    }
+}
+
+#[cfg(test)]
+mod test_manager_bool {
+
+    use crate::{StateManager, SaveAndRestore, BoolManager};
+
+    #[test]
+    fn works() {
+        let mut mgr = StateManager::default();
+        let a = mgr.manage_bool(false);
+        assert!(!mgr.get_bool(a));
+
+        mgr.save_state();
+
+        let x = mgr.set_bool(a, true);
+        assert!(x);
+        assert!(mgr.get_bool(a));
+
+        mgr.restore_state();
+        assert!(!mgr.get_bool(a));
+
+        let x = mgr.flip_bool(a);
+        assert!(x);
+        mgr.save_state();
+
+        let x = mgr.set_bool(a, false);
+        assert!(!x);
+        let x = mgr.set_bool(a, true);
+        assert!(x);
+        assert!(mgr.get_bool(a));
+        mgr.restore_state();
+        assert!(mgr.get_bool(a));
     }
 }
