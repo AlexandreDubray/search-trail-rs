@@ -2,6 +2,13 @@
 name = "search_trail"
 version = "0.1.0"
 edition = "2021"
+authors = ["Alexandre Dubray <alexandre.dubray@uclouvain.be"]
+description = "A simple manager of variables that can save and restore their values"
+readme = "README.md"
+repository = "https://github.com/AlexandreDubray/search-trail-rs"
+license = "MIT"
+keywords = ["backtrack", "trail"]
+categories = ["data-structures"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
