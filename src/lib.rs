@@ -32,6 +32,7 @@ macro_rules! manage_numbers {
                 trail_size: usize,
                 $(
                     [<size _ $u>]: usize,
+                    [<size _ option _ $u>]: usize,
                 )*
             }
 
@@ -40,6 +41,7 @@ macro_rules! manage_numbers {
             enum TrailEntry {
                 $(
                     [<$u:camel Entry>]([<State $u:camel>]),
+                    [<Option $u:camel Entry>]([<StateOption $u:camel>]),
                 )*
             }
 
@@ -91,6 +93,7 @@ macro_rules! manage_numbers {
                 levels: Vec<Level>,
                 $(
                     [<numbers _ $u>]: Vec<[<State $u:camel>]>,
+                    [<numbers _ option _ $u>]: Vec<[<State Option $u:camel>]>,
                 )*
             }
 
@@ -102,11 +105,13 @@ macro_rules! manage_numbers {
                         levels: vec![Level {
                             trail_size: 0,
                             $(
-                                [<size _ $u>]: 0,
+                                [<size_ $u>]: 0,
+                                [<size_option_ $u>]: 0,
                             )*
                         }],
                         $(
                             [<numbers _ $u>]: vec![],
+                            [<numbers_option_ $u>]: vec![],
                         )*
                     }
                 }
@@ -129,6 +134,7 @@ macro_rules! manage_numbers {
                         trail_size: self.trail.len(),
                         $(
                             [<size _ $u>]: self.[<numbers _ $u>].len(),
+                            [<size _ option _ $u>]: self.[<numbers _ option _ $u>].len(),
                         )*
                     });
                 }
@@ -146,12 +152,14 @@ macro_rules! manage_numbers {
                             match e {
                                 $(
                                     TrailEntry::[<$u:camel Entry>](state) => self.[<numbers _ $u>][state.id.0] = state,
+                                    TrailEntry::[<Option $u:camel Entry>](state) => self.[<numbers_option_ $u>][state.id.0] = state,
                                 )*
                             }
                         }
                         self.trail.truncate(level.trail_size);
                         $(
                             self.[<numbers _ $u>].truncate(level.[<size _ $u>]);
+                            self.[<numbers_option_ $u>].truncate(level.[<size_option_ $u>]);
                         )*
                     }
             }
@@ -173,6 +181,21 @@ macro_rules! manage_numbers {
                 value: $u,
             }
 
+            #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+            #[doc="An index of the managed resource type"]
+            pub struct [<Reversible Option $u:camel>](usize);
+
+            #[doc="A state for the managed resource type"]
+            #[derive(Debug, Clone, Copy)]
+            struct [<StateOption $u:camel>] {
+                #[doc="Index of the resource in the asociated vector in the trail"]
+                id: [<ReversibleOption $u:camel>],
+                #[doc="Clock of the resource. If less than the clock of the manager, the data needs to be saved on the trail if modified"]
+                clock: usize,
+                #[doc="The value of the managed resource"]
+                value: Option<$u>,
+            }
+
             #[doc="Trait that define what operation can be done on the managed resource type"]
             pub trait [<$u:camel Manager>] {
                 #[doc=format!("Creates a new managed {}.Returns the index of the resource in the corresponding vector", stringify!($u))]
@@ -185,6 +208,28 @@ macro_rules! manage_numbers {
                 fn [<increment _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
                 #[doc="Decrements the value of the resource at the given index and returns the new value"]
                 fn [<decrement _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u;
+            }
+
+            #[doc="Trait that define what operation can be done on the managed resource type"]
+            pub trait [<Option $u:camel Manager>] {
+                #[doc=format!("Creates a new managed {}.Returns the index of the resource in the corresponding vector", stringify!($u))]
+                fn [<manage _ option _ $u>](&mut self, value: Option<$u>) -> [<Reversible Option $u:camel>];
+                #[doc="Returns the value of the resource at the given index"]
+                fn [<get _ option _ $u>](&self, id: [<Reversible Option $u:camel>]) -> Option<$u>;
+                #[doc="Returns true if the managed ressource is not None"]
+                fn [<is_option_ $u _some>](&self, id: [<Reversible Option $u:camel>]) -> bool {
+                    self.[<get_option_ $u>](id).is_some()
+                }
+                #[doc="Returns true if the managed ressource is None"]
+                fn [<is_option_ $u _none>](&self, id: [<Reversible Option $u:camel>]) -> bool {
+                    self.[<get_option_ $u>](id).is_none()
+                }
+                #[doc="Sets the resource at the given index to the given value and returns the new value"]
+                fn [<set _ option _ $u>](&mut self, id: [<Reversible Option $u:camel>], value: Option<$u>) -> Option<$u>;
+                #[doc="Increments the value of the resource at the given index and returns the new value. Panic if the option is none."]
+                fn [<increment _ option _ $u>](&mut self, id: [<Reversible Option $u:camel>]) -> $u;
+                #[doc="Decrements the value of the resource at the given index and returns the new value. Panic if the option is none."]
+                fn [<decrement _ option _ $u>](&mut self, id: [<Reversible Option $u:camel>]) -> $u;
             }
 
             impl [<$u:camel Manager>] for StateManager {
@@ -223,6 +268,51 @@ macro_rules! manage_numbers {
 
                 fn [<decrement _ $u>](&mut self, id: [<Reversible $u:camel>]) -> $u {
                     self.[<set _ $u>](id, self.[<get _ $u>](id) - 1 as $u)
+                }
+            }
+
+            impl [<Option $u:camel Manager>] for StateManager {
+                fn [<manage_option_ $u>](&mut self, value: Option<$u>) -> [<ReversibleOption $u:camel>] {
+                    let id = [<ReversibleOption $u:camel>](self.[<numbers_option_ $u>].len());
+                    self.[<numbers_option_ $u>].push([<StateOption $u:camel>]{
+                        id,
+                        clock: self.clock,
+                        value,
+                    });
+                    id
+                }
+
+                fn [<get_option_ $u>](&self, id: [<ReversibleOption $u:camel>]) -> Option<$u> {
+                    self.[<numbers_option_ $u>][id.0].value
+                }
+
+                fn [<set_option_ $u>](&mut self, id: [<ReversibleOption $u:camel>], value: Option<$u>) -> Option<$u> {
+                    let curr = self.[<numbers_option_ $u>][id.0];
+                    if value != curr.value {
+                        if curr.clock < self.clock {
+                            self.trail.push(TrailEntry::[<Option $u:camel Entry>](curr));
+                            self.[<numbers_option_ $u>][id.0] = [<StateOption $u:camel>] {
+                                id,
+                                clock: self.clock,
+                                value,
+                            };
+                        } else {
+                            self.[<numbers_option_ $u>][id.0].value = value;
+                        }
+                    }
+                    value
+                }
+
+                fn [<increment_option_ $u>](&mut self, id: [<ReversibleOption $u:camel>]) -> $u {
+                    let value = self.[<numbers_option_ $u>][id.0].value.unwrap();
+                    self.[<set_option_ $u>](id, Some(value + 1 as $u));
+                    value + 1 as $u
+                }
+
+                fn [<decrement_option_ $u>](&mut self, id: [<ReversibleOption $u:camel>]) -> $u {
+                    let value = self.[<numbers_option_ $u>][id.0].value.unwrap();
+                    self.[<set_option_ $u>](id, Some(value -1 as $u));
+                    value - 1 as $u
                 }
             }
 
@@ -347,6 +437,10 @@ manage_numbers! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReversibleBool(ReversibleUsize);
 
+/// Index for a managed optional bool. Note that this only redirect towards a managed usize
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ReversibleOptionBool(ReversibleOptionUsize);
+
 /// Trait that define the operation that can be done on a managed boolean.
 pub trait BoolManager {
     /// Creates a new managed boolean
@@ -372,6 +466,59 @@ impl BoolManager for StateManager {
 
     fn set_bool(&mut self, id: ReversibleBool, value: bool) -> bool {
         self.set_usize(id.0, value as usize) != 0
+    }
+}
+
+/// Trait that define the operation that can be done on a managed boolean.
+pub trait OptionBoolManager {
+    /// Creates a new managed boolean
+    fn manage_option_bool(&mut self, value: Option<bool>) -> ReversibleOptionBool;
+    /// Returns the value of a managed boolean
+    fn get_option_bool(&self, id: ReversibleOptionBool) -> Option<bool>;
+    /// Sets the value of a managed boolean to the given value and returns the new value
+    fn set_option_bool(&mut self, id: ReversibleOptionBool, value: bool) -> bool;
+    /// Sets the value of a managed boolean to None
+    fn set_option_bool_none(&mut self, id: ReversibleOptionBool);
+    /// Flips the value of a managed boolean and returns the new value. Panic if option is none
+    fn flip_option_bool(&mut self, id: ReversibleOptionBool) -> bool {
+        let value = self.get_option_bool(id).unwrap();
+        self.set_option_bool(id, value);
+        !value
+    }
+    /// Return true iff the option is some
+    fn is_option_bool_some(&self, id: ReversibleOptionBool) -> bool {
+        self.get_option_bool(id).is_some()
+    }
+    /// Return true iff the option is some
+    fn is_option_bool_none(&self, id: ReversibleOptionBool) -> bool {
+        self.get_option_bool(id).is_none()
+    }
+}
+
+impl OptionBoolManager for StateManager {
+    fn manage_option_bool(&mut self, value: Option<bool>) -> ReversibleOptionBool {
+        if let Some(b) = value {
+            ReversibleOptionBool(self.manage_option_usize(Some(b as usize)))
+        } else {
+            ReversibleOptionBool(self.manage_option_usize(None))
+        }
+    }
+
+    fn get_option_bool(&self, id: ReversibleOptionBool) -> Option<bool> {
+        if let Some(v) = self.get_option_usize(id.0) {
+            Some(v != 0)
+        } else {
+            None
+        }
+    }
+
+    fn set_option_bool(&mut self, id: ReversibleOptionBool, value: bool) -> bool {
+        self.set_option_usize(id.0, Some(value as usize));
+        value
+    }
+
+    fn set_option_bool_none(&mut self, id: ReversibleOptionBool) {
+        self.set_option_usize(id.0, None);
     }
 }
 
