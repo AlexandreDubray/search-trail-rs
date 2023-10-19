@@ -30,10 +30,6 @@ macro_rules! manage_numbers {
             struct Level {
                 /// The length of the trail at the moment this level was started
                 trail_size: usize,
-                $(
-                    [<size _ $u>]: usize,
-                    [<size _ option _ $u>]: usize,
-                )*
             }
 
             /// An entry that is used to restore data from the trail
@@ -104,10 +100,6 @@ macro_rules! manage_numbers {
                         trail: vec![],
                         levels: vec![Level {
                             trail_size: 0,
-                            $(
-                                [<size_ $u>]: 0,
-                                [<size_option_ $u>]: 0,
-                            )*
                         }],
                         $(
                             [<numbers _ $u>]: vec![],
@@ -132,10 +124,6 @@ macro_rules! manage_numbers {
                     self.clock += 1;
                     self.levels.push(Level {
                         trail_size: self.trail.len(),
-                        $(
-                            [<size _ $u>]: self.[<numbers _ $u>].len(),
-                            [<size _ option _ $u>]: self.[<numbers _ option _ $u>].len(),
-                        )*
                     });
                 }
 
@@ -157,10 +145,6 @@ macro_rules! manage_numbers {
                             }
                         }
                         self.trail.truncate(level.trail_size);
-                        $(
-                            self.[<numbers _ $u>].truncate(level.[<size _ $u>]);
-                            self.[<numbers_option_ $u>].truncate(level.[<size_option_ $u>]);
-                        )*
                     }
             }
 
