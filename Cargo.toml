@@ -1,6 +1,6 @@
 [package]
 name = "search_trail"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Alexandre Dubray <alexandre.dubray@uclouvain.be"]
 description = "A simple manager of variables that can save and restore their values"

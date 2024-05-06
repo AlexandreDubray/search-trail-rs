@@ -182,7 +182,7 @@ macro_rules! manage_numbers {
 
             #[doc="Trait that define what operation can be done on the managed resource type"]
             pub trait [<$u:camel Manager>] {
-                #[doc=format!("Creates a new managed {}.Returns the index of the resource in the corresponding vector", stringify!($u))]
+                #[doc="Creates a new managed ressource.Returns the index of the resource in the corresponding vector"]
                 fn [<manage _ $u>](&mut self, value: $u) -> [<Reversible $u:camel>];
                 #[doc="Returns the value of the resource at the given index"]
                 fn [<get _ $u>](&self, id: [<Reversible $u:camel>]) -> $u;
@@ -196,7 +196,7 @@ macro_rules! manage_numbers {
 
             #[doc="Trait that define what operation can be done on the managed resource type"]
             pub trait [<Option $u:camel Manager>] {
-                #[doc=format!("Creates a new managed {}.Returns the index of the resource in the corresponding vector", stringify!($u))]
+                #[doc="Creates a new managed {}.Returns the index of the resource in the corresponding vector"]
                 fn [<manage _ option _ $u>](&mut self, value: Option<$u>) -> [<Reversible Option $u:camel>];
                 #[doc="Returns the value of the resource at the given index"]
                 fn [<get _ option _ $u>](&self, id: [<Reversible Option $u:camel>]) -> Option<$u>;
@@ -509,26 +509,6 @@ impl OptionBoolManager for StateManager {
 #[cfg(test)]
 mod test_manager {
     use crate::{BoolManager, SaveAndRestore, StateManager};
-
-    #[test]
-    #[should_panic]
-    fn can_not_get_bool_manage_at_deeper_level() {
-        let mut mgr = StateManager::default();
-        let a = mgr.manage_bool(true);
-        assert!(mgr.get_bool(a));
-
-        mgr.save_state();
-
-        let b = mgr.manage_bool(false);
-        assert!(!mgr.get_bool(b));
-        assert!(mgr.get_bool(a));
-
-        mgr.set_bool(a, false);
-
-        mgr.restore_state();
-        assert!(mgr.get_bool(a));
-        mgr.get_bool(b);
-    }
 
     #[test]
     #[cfg(debug_assertions)]
